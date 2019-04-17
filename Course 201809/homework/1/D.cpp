@@ -1,0 +1,11 @@
+#include <stdio.h>
+#include <math.h>
+
+int main()
+{
+	const double PI=3.14159265;
+	double R;
+	scanf("%lf",&R);
+	printf("The perimeter is %.4lf, the area is %.4lf.",2*PI*R,PI*R*R);
+	return 0;
+}
