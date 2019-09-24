@@ -1,42 +1,48 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int digit[10002];
-
 int main()
 {
 	std::ios::sync_with_stdio(false);
 	
-	int t;
-	cin >> t;
-	for(int i=0;i<t;i++) cin >> digit[i];
+	int n;
+	cin >> n;
 	
-	int maxsum,maxhere;
-	maxsum = maxhere = digit[0];
-	
-	int left,sv_left;
-	
-	for(int i=0;i<t;i++)
+	vector<int> num;
+	int tmp;
+	for(int i=0;i<n;++i)
 	{
-		if(maxhere <= 0)
+		cin >> tmp;
+		num.push_back(tmp);
+	}
+	
+	vector<int> ans;
+	vector<int> sv_ans;
+	int maxhere=0,maxsum=0;
+	
+	for(vector<int>::iterator ptr=num.begin();ptr<num.end();++ptr)
+	{
+		if(maxhere < 0)
 		{
-			maxhere = digit[i];
-			left = i;
+			maxhere = (*ptr);
+			ans.clear();
+			ans.push_back(*ptr);
 		}
-		else maxhere += digit[i];
-		if(maxhere > maxsum)
+		else
+		{
+			maxhere += (*ptr);
+			ans.push_back(*ptr);
+		}
+		
+		if(maxhere > maxsum || (maxsum==0 && maxhere==0))
 		{
 			maxsum = maxhere;
-			sv_left = left;
+			sv_ans = ans;
 		}
 	}
 	
-	cout << maxsum;
-	
-	int tmp=0,sv_right=sv_left;
-	for(;tmp!=maxsum;++sv_right) tmp+=digit[sv_right];
-	
-	cout << " " << digit[sv_left] << " " << digit[sv_right-1] << endl;
+	if(sv_ans.empty()) cout << "0 " << num.front() << " " << num.back() << endl;
+	else cout << maxsum << " " << sv_ans.front() << " " << sv_ans.back() << endl;
 
 	return 0;
 }

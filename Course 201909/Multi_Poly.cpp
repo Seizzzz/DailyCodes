@@ -12,11 +12,11 @@ list<term> Multi_Polyn(list<term> a, list<term> b)
 	list<term> ans; //存放答案多项式 
 	ans.push_back(term{0, 0}); //初始元素 
 	
-	while(a.size() > 1) //当多项式a中存在待乘元素 
+	while(!a.empty()) //当多项式a中存在待乘元素 
 	{
 		list<term>::iterator ptr_ans=ans.begin(); //由内层循环提出 优化扫描次数 
 		 
-		for(list<term>::iterator ptr_b = b.begin();;)
+		for(list<term>::iterator ptr_b = b.begin();;++ptr_b)
 		{
 			term tmp; //临时存放计算结果 
 			tmp.c = (*ptr_b).c * a.front().c; //系数相乘 
@@ -35,11 +35,12 @@ list<term> Multi_Polyn(list<term> a, list<term> b)
 					break;
 				}
 			}
-			if(++ptr_b == --b.end()) break; //判断b多项式中项是否已经乘毕
+			if(ptr_b == --b.end()) break; //判断b多项式中项是否已经乘毕
 			--ptr_ans; //恢复用于判断而移动的ans  
 		}
 		a.pop_front(); //pop已计算完毕的a项 
 	}
+	if(ans.back().c == 0) ans.pop_back();
 	return ans;
 }
 
@@ -51,28 +52,27 @@ int main()
 	list<term> polya;
 	list<term> polyb;
 	
-	string line;
-	stringstream ss_line1,ss_line2;
-	getline(cin,line);
-	ss_line1 << line;
-	while(ss_line1)
+	int n1,n2;
+	cin >> n1;
+	while(n1--)
 	{
 		term tmp;
-		ss_line1 >> tmp.c >> tmp.e;
+		cin >> tmp.e >> tmp.c;
 		polya.push_back(tmp);
 	}
-	getline(cin,line);
-	ss_line2 << line;
-	while(ss_line2)
+	cin >> n2;
+	while(n2--)
 	{
 		term tmp;
-		ss_line2 >> tmp.c >> tmp.e;
+		cin >> tmp.e >> tmp.c;
 		polyb.push_back(tmp);
 	}
 	
 	list<term> ans = Multi_Polyn(polya,polyb);
 	
-	for(list<term>::iterator ptr=ans.begin();ptr!=ans.end();ptr++) cout << (*ptr).c << " " << (*ptr).e << endl;
+	cout << ans.size();
+	for(list<term>::iterator ptr=ans.begin();ptr!=ans.end();ptr++) cout << " " << (*ptr).e << " " << setprecision(1) << fixed << (*ptr).c;
+	cout << endl;
 
 	return 0;
 }
