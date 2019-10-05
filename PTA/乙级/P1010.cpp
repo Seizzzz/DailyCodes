@@ -22,7 +22,7 @@ int main()
 	}
 	
 	cout << line.front().c << " " << line.front().e;
-	for(vector<term>::iterator ptr= line.begin()+1;ptr<line.end()-1;++ptr)
+	for(vector<term>::iterator ptr= line.begin()+1;ptr!=line.end();++ptr)
 	{
 		if((*ptr).c != 0) cout << " " << (*ptr).c << " " << (*ptr).e;
 	}
