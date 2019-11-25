@@ -4,14 +4,12 @@ using namespace std;
 string n1,n2;
 int tag,radix;
 
-long long input(string num,int radix)
+long long input(string s,int radix)
 {
 	long long ans=0;
-	for(int i=num.length()-1;i>=0;--i)
+	for(int i=0;i<s.length();++i)
 	{
-		long long now = (isdigit(num[i]))? num[i]-'0':num[i]-'a'+10;
-		if(now >= radix) return 0;
-		ans += now * (long long)pow(radix,num.length()-i-1);
+		ans = ans*radix + ((isdigit(s[i]))? s[i]-'0':s[i]-'a'+10);
 	}
 	return ans;
 }
@@ -19,11 +17,18 @@ long long input(string num,int radix)
 int main()
 {
 	std::ios::sync_with_stdio(false);
-
+	
 	cin >> n1 >> n2;
 	cin >> tag >> radix;
 	
 	if(tag==2) swap(n1,n2);
+	
+	if(n1 == n2)
+	{
+		cout << radix << endl;
+		exit(0);
+	}
+	
 	long long num1 = input(n1,radix);
 	
 	long long minval=2,maxval=35;
