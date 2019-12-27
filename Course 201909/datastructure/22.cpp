@@ -22,10 +22,23 @@ int main()
 	adjlist info;
 	
 	int vexnum = 0;
-	while(cin >> info[vexnum].vexdata)
+	string s;
+	stringstream ss;
+	
+	while(cin >> s)
 	{
-		int arc;
-		while(cin ) 
+		ss << s;
+		ss >> info[vexnum].vexdata;
+		info[vexnum].firstarc = new arcnode;
+		arcnode* buf = info[vexnum].firstarc;
+		while(ss >> arc)
+		{
+			buf->adjvex = arc;
+			buf->nextarc = new arcnode;
+			buf = buf.nextarc;
+		}
+		delete buf;
+		buf = NULL;
 		++vexnum;
 	}
 
