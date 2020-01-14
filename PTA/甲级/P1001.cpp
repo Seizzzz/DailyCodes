@@ -1,4 +1,5 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <string>
 using namespace std;
 
 int main()
@@ -9,7 +10,7 @@ int main()
 	cin >> a >> b;
 	string s=to_string(a+b);
 	
-	for(int i=0;i<s.length();i++)
+	for(unsigned i=0;i<s.length();i++)
 	{
 		cout << s[i];
 		if(s[i]=='-') continue;
