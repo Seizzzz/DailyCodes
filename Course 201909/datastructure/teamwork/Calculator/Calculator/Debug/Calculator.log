@@ -1,4 +1,0 @@
-﻿  Calculator.cpp
-  C:\Users\SLRYZD\Desktop\Github\Calculator\Calculator\Calculator.cpp(53) : warning C4715: “num_symbol”: 不是所有的控件路径都返回值
-  C:\Users\SLRYZD\Desktop\Github\Calculator\Calculator\Calculator.cpp(72) : warning C4715: “cal_binary”: 不是所有的控件路径都返回值
-  Calculator.vcxproj -> C:\Users\SLRYZD\Desktop\Github\Calculator\Calculator\Debug\Calculator.exe
