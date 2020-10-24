@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int* nodes;
-bool mymap[10002][10002]; 
+int nodes[10005];
+bool mymap[10005][10005]; 
 int n;
 
 int parent(int a)
@@ -11,7 +11,7 @@ int parent(int a)
 	return nodes[a] = parent(nodes[a]);
 }
 
-int merge(int a,int b)
+void merge(int a,int b)
 {
 	int pa = parent(a),
 		pb = parent(b); 
@@ -68,7 +68,6 @@ int main()
 	std::ios::sync_with_stdio(false);
 	
 	cin >> n;
-	nodes = new int[n+2];
 	
 	for(int i=1;i<=n;++i) nodes[i] = i;
 	for(int i=0;i<n-1;++i)
