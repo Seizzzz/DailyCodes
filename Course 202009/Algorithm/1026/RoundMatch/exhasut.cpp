@@ -2,6 +2,12 @@
 
 void ExhaustMethod::output()
 {
+	if(!solved)
+	{
+		cout << "NOT FOUND" << endl;
+		return;
+	}
+	
 	for (int i = 0; i < num; ++i)
 	{
 		for (int j = 0; j < num; ++j)
@@ -49,13 +55,26 @@ void ExhaustMethod::dfs(int i, int j)
 
 ExhaustMethod::ExhaustMethod(int n): num(n)
 {
-	for (int i = 0; i < n; ++i)
+	if (n % 2) day = n;
+	else day = n - 1;
+	
+	table = new int* [n + 1];
+	for (int i = 0; i < n + 1; ++i) table[i] = new int[n + 1];
+	record = new int[n + 1];
+
+	for (int i = 0; i < n + 1; ++i)
 	{
-		for (int j = 0; j < n; ++j)
+		for (int j = 0; j < n + 1; ++j)
 		{
-			table[i][j] = 0;
+			table[i][j] = -1;
 		}
 	}
 
 	dfs(0, 0);
+}
+
+ExhaustMethod::~ExhaustMethod()
+{
+	for (int i = 0; i < num + 1; ++i) delete[] table[i];
+	delete[] table;
 }

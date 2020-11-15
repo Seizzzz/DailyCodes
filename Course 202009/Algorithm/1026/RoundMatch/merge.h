@@ -7,8 +7,6 @@ class MergeMethod
 {
 public:
 	int** table;
-	int* temp;
-	int record[100];
 	int num;
 
 	void output();
@@ -17,4 +15,5 @@ public:
 	void generate(int);
 
 	MergeMethod(int);
+	~MergeMethod();
 };

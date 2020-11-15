@@ -55,28 +55,26 @@ void MergeMethod::generate(int n)
 {
     int mid = n / 2;
 
-    for (int i = 0; i < mid; ++i) //用于填补右侧
-    {
-        temp[i] = mid + i;
-        temp[mid + i] = temp[i];
-    }
-
     for (int i = 0; i < mid; ++i)
     {
         for (int j = 0; j <= mid; ++j)
         {
-            if (table[i][j] >= mid)
+            if (table[i][j] >= mid) //对于左上块不小于mid的数 若此时+n/2向下复制时会超出范围 因而需要额外处理
             {
-                table[i][j] = temp[i]; //vital
-                table[i + mid][j] = (temp[i] + mid) % n;
+                table[i][j] = mid + i; //vital
+                table[i + mid][j] = (mid + mid + i) % n;
             }
             else table[i + mid][j] = table[i][j] + mid;
         }
+    }
 
-        for (int j = 1; j < mid; ++j)
+    for (int i = 0; i < mid; ++i)
+    {
+        for (int j = 1; j < mid; ++j) //对右侧进行填补
         {
-            table[i][j + mid] = temp[i + j];
-            table[temp[i + j]][j + mid] = i;
+            int k = mid + (i + j) % mid; //对手
+            table[i][j + mid] = k;
+            table[k][j + mid] = i;
         }
     }
 }
@@ -85,7 +83,12 @@ MergeMethod::MergeMethod(int n): num(n)
 {
     table = new int* [n + 1];
     for (int i = 0; i < n + 1; ++i) table[i] = new int[n + 1];
-    temp = new int[n];
 
     divide(n);
+}
+
+MergeMethod::~MergeMethod()
+{
+    for (int i = 0; i < num + 1; ++i) delete[] table[i];
+    delete[] table;
 }

@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include "exhasut.h"
 #include "merge.h"
+#include "rotate.h"
 using namespace std;
 
 int main()
@@ -10,10 +11,12 @@ int main()
     int n;
     cin >> n;
 
-    MergeMethod sol(n);
-    sol.output();
-
     //ExhaustMethod sol(n);
     //sol.output();
 
+    //MergeMethod sol(n);
+    //sol.output();
+
+    RotateMethod sol(n);
+    sol.output();
 }

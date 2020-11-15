@@ -6,13 +6,15 @@ using namespace std;
 class ExhaustMethod
 {
 public:
-	int table[100][100];
-	int record[100];
+	int** table;
+	int* record;
 	int num;
 	bool solved = false;
+	int day;
 
 	void output();
 	bool check(int, int);
 	void dfs(int, int);
 	ExhaustMethod(int);
+	~ExhaustMethod();
 };

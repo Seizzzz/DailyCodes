@@ -141,11 +141,13 @@
   <ItemGroup>
     <ClCompile Include="exhasut.cpp" />
     <ClCompile Include="merge.cpp" />
+    <ClCompile Include="rotate.cpp" />
     <ClCompile Include="RoundMatch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="exhasut.h" />
     <ClInclude Include="merge.h" />
+    <ClInclude Include="rotate.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

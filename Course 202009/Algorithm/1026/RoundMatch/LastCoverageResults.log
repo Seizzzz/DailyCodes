@@ -1,0 +1,21 @@
+[2020-10-24 22:13:13] [info] Start Program:
+Path:"C:\\Users\\SLRYZD\\Desktop\\Github\\DailyCodes\\Course 202009\\Algorithm\\1026\\RoundMatch\\Debug\\RoundMatch.exe"
+Arguments:
+Working directory: "C:\\Users\\SLRYZD\\Desktop\\Github\\DailyCodes\\Course 202009\\Algorithm\\1026\\RoundMatch\\"
+Modules: Selected: C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Algorithm\1026\RoundMatch\Debug\RoundMatch.exe Excluded: 
+Sources: Selected: C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Algorithm\1026\RoundMatch Excluded: 
+Log Level: Normal
+Cover Children: 0
+Aggregate by file: 1
+Continue after C++ exception: 0
+Optimized build support: 0
+Export: binary C:\Users\SLRYZD\AppData\Local\Temp\rmoiz2xt.rqq 
+Input coverage: 
+Unified diff: 
+Excluded line regular expressions: 
+Substitute pdb source paths: 
+
+[2020-10-24 22:13:13] [info] Module: C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Algorithm\1026\RoundMatch\Debug\RoundMatch.exe is selected because it matches selected pattern: C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Algorithm\1026\RoundMatch\Debug\RoundMatch.exe
+[2020-10-24 22:13:13] [info] ----------------------------------------------------
+[2020-10-24 22:13:13] [info] Coverage binary generated in file: C:\Users\SLRYZD\AppData\Local\Temp\rmoiz2xt.rqq
+[2020-10-24 22:13:13] [info] ----------------------------------------------------
