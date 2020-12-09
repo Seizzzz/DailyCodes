@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-fileNameStr = './Beijing.csv'
+fileNameStr = './BeijingPM20100101_20151231.csv'
 df = pd.read_csv(fileNameStr, encoding='utf-8', dtype=str)
 num = len(df)
 
