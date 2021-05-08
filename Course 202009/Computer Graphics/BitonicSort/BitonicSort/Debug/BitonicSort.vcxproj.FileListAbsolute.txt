@@ -1,0 +1,2 @@
+C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Computer Graphics\BitonicSort\BitonicSort\Debug\BitonicSort.exe
+C:\Users\SLRYZD\Desktop\Github\DailyCodes\Course 202009\Computer Graphics\BitonicSort\BitonicSort\Debug\BitonicSort.pdb

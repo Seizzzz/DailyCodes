@@ -6,3 +6,15 @@
 *.csv
 *.png
 *.html
+*.user
+*.vcxproj
+*.obj
+*.sln
+*.pdb
+*.idb
+*.pdb
+*.filters
+*.tlog
+*.ilk
+*.recipe
+*.log
