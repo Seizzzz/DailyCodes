@@ -43,9 +43,9 @@ data_train = data_train.reset_index(drop=True)
 data_test: pd.DataFrame = data.iloc[split: 150, :]
 data_test = data_test.reset_index(drop=True)
 
-# 保存训练集、测试集
-# data_train.to_csv('train.csv')
-# data_test.to_csv('test.csv')
+# 保存随机生成的训练集、测试集
+data_train.to_csv('train.csv')
+data_test.to_csv('test.csv')
 
 # 读取训练集
 data_train = pd.read_csv("train.csv", encoding='utf-8', index_col=0, header=0)
