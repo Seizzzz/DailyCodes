@@ -593,7 +593,7 @@ _Program* getProgram(Type *now){
         cout << "getProgram error" << endl;
         return NULL;
     }
-    _Program* ASTRoot=new _Program;
+    _Program* ASTRoot = new _Program;
     getProgramHead(now->children[0],ASTRoot->programId,ASTRoot->paraList);
     ASTRoot->subProgram=getProgramBody(now->children[2]);
     return ASTRoot;
