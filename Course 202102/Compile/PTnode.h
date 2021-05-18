@@ -13,16 +13,16 @@
 using namespace std;
 
 //重新定义属性类型(yylval实际上应由yacc定义)c
-class Type{
+class Type {
 public:
-    string str;//终结符号的具体属性
-    string token;//终结符号或非终结符号本身的名称
-    int lineNumber;//终结符号的行号，参照语法分析指导.docx
-    vector<Type*> children; //对应产生式下面的结点
+	string str;//具体属性
+	string token;//本身的名称
+	int lineNumber;//终结符号的行号
+	vector<Type*> children;
 
-    Type(){}
-    Type(string typ, string name, int ln): str(typ), token(name), lineNumber(ln){}
-    Type(string name, vector<Type*> cdn): token(name), children(cdn){}
+	Type() {}
+	Type(string typ, string name, int ln) : str(typ), token(name), lineNumber(ln) {}
+	Type(string name, vector<Type*> cdn) : token(name), children(cdn) {}
 };
 #define YYSTYPE Type*
 

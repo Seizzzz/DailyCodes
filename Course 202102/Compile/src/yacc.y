@@ -25,7 +25,7 @@ char rec_buff[505];
 
 Type* ParseTreeHead=NULL;
 
-vector<string> syntaxErrorInformation; //存放语法错误信息
+vector<string> syntaxError; //存放语法错误信息
 
 %}
 
@@ -750,26 +750,26 @@ void yyerror(const char *s){
 	string errorInformation;//定义错误信息
 	errorInformation += string(s);//添加错误信息
 	errorInformation += ", location: " + itos(yylineno-1) + "." + itos(yycolumn-yyleng);//添加错误位置
-	syntaxErrorInformation.push_back(errorInformation);//存放错误信息
+	syntaxError.push_back(errorInformation);//存放错误信息
 }
 
 void yyerror(const char *s, YYLTYPE *loc){//处理单个字符的错误
 	haveSemanticError = true;
 	string errorInformation;
 	errorInformation = "syntax error, " + string(s) + ", location: " + itos(loc->first_line) + "." + itos(loc->first_column) + "-" + itos(loc->last_line) + "." + itos(loc->last_column);
-	syntaxErrorInformation.push_back(errorInformation);
+	syntaxError.push_back(errorInformation);
 }
 
 void yyerror(const char *s, int line, int col){//处理一行以内的错误
 	haveSemanticError = true;
 	string errorInformation;
 	errorInformation = "syntax error, " + string(s) + ", location: " + itos(line) + "." + itos(col);
-	syntaxErrorInformation.push_back(errorInformation);
+	syntaxError.push_back(errorInformation);
 }
 
 void yyerror(const char *s, int startLine, int startCol, int endLine, int endCol){//处理涉及多行的错误
 	haveSemanticError = true;
 	string errorInformation;
 	errorInformation = "syntax error, " + string(s) + ", location: " + itos(startLine) + "." + itos(startCol) + "-" + itos(endLine) + "." + itos(endCol);
-	syntaxErrorInformation.push_back(errorInformation);
+	syntaxError.push_back(errorInformation);
 }

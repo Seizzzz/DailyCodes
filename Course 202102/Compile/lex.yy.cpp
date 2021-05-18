@@ -504,8 +504,8 @@ extern string itos(int num);
 
 string charRec; //保存字符常量
 char lineBuffer[10005]; //保存当前行的所有内容
-vector<string> lexicalErrorInformation;
-void addLexicalErrorInformation(char *word, string info, int l, int r);
+vector<string> lexicalError;
+void addlexicalError(char *word, string info, int l, int r);
 bool CheckAndAddLengthTooLargeErrorInformation(char *text, string type, int l, int r);
 
 //函数声明
@@ -1248,14 +1248,14 @@ case 37:
 YY_RULE_SETUP
 #line 419 "lex.l"
 {//非法字符 错误3
-    addLexicalErrorInformation(yytext, "Invalid character!", yycolumn-yyleng, yycolumn-1);
+    addlexicalError(yytext, "Invalid character!", yycolumn-yyleng, yycolumn-1);
 	//cout << "error: invalid char" << endl;
 }
 	YY_BREAK
 case YY_STATE_EOF(CH):
 #line 424 "lex.l"
 { //读取字符常量时遇到文件尾 错误4
-    addLexicalErrorInformation(yytext, "Unexpected end of file when reading a char constant", yycolumn-yyleng, yycolumn-1);
+    addlexicalError(yytext, "Unexpected end of file when reading a char constant", yycolumn-yyleng, yycolumn-1);
     return 0;
 }
 	YY_BREAK
@@ -1265,7 +1265,7 @@ YY_RULE_SETUP
 {//字符常量限定在一行中
 	int len=charRec.length();
 	if(yytext[0]=='\'' && len==0){
-        addLexicalErrorInformation(yytext, "Char constant missing!", yycolumn-yyleng-1, yycolumn-1); //错误5
+        addlexicalError(yytext, "Char constant missing!", yycolumn-yyleng-1, yycolumn-1); //错误5
 		//cout << "error: missing char" << endl;
         BEGIN INITIAL;
         yylval = new Type;
@@ -1289,7 +1289,7 @@ YY_RULE_SETUP
 		return CHAR;
 	}
 	else if(yytext[0]=='\''){
-        addLexicalErrorInformation(yytext, "Too many characters in a char constant!", yycolumn-yyleng-len, yycolumn-yyleng-1); //错误6
+        addlexicalError(yytext, "Too many characters in a char constant!", yycolumn-yyleng-len, yycolumn-yyleng-1); //错误6
 		//cout << "error: too many char" << endl;
         yylval = new Type;
         yylval->str=charRec[0];
@@ -1302,7 +1302,7 @@ YY_RULE_SETUP
         return CHAR;
     }
 	else{
-        addLexicalErrorInformation(yytext, "Right quote missing!", yycolumn-yyleng-len+1, yycolumn-yyleng-len+1); //错误7
+        addlexicalError(yytext, "Right quote missing!", yycolumn-yyleng-len+1, yycolumn-yyleng-len+1); //错误7
         yyless(0);//将换行符退回
 		yylineno--;//行号减一
         //cout << "quote miss match" << endl;
@@ -1351,7 +1351,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(MCOM):
 #line 504 "lex.l"
 { //多行注释遇到文件尾 错误8
-    addLexicalErrorInformation(yytext, "Unexpected end of file when reading a multiple line comment, lacking of a right brace", yycolumn-yyleng, yycolumn-1);
+    addlexicalError(yytext, "Unexpected end of file when reading a multiple line comment, lacking of a right brace", yycolumn-yyleng, yycolumn-1);
     return 0;
 }
 	YY_BREAK
@@ -2276,7 +2276,7 @@ int yywrap()
 	return 1;
 }
 
-void addLexicalErrorInformation(char *word, string info, int l, int r){
+void addlexicalError(char *word, string info, int l, int r){
     string errorInformation = "[" + info + "] " + itos(yylineno-1) + "." + itos(l) + "-" + itos(yylineno-1) + "." + itos(r) + "\n";
     errorInformation += string(lineBuffer) + "\n";
     for(int i=1;i<=l-1;i++)
@@ -2284,7 +2284,7 @@ void addLexicalErrorInformation(char *word, string info, int l, int r){
     for(int i=l;i<=r;i++)
         errorInformation+="^";
     //cout << errorInformation << endl;
-    lexicalErrorInformation.push_back(errorInformation);
+    lexicalError.push_back(errorInformation);
 }
 
 bool CheckAndAddLengthTooLargeErrorInformation(char *text, string type, int l, int r){
@@ -2295,7 +2295,7 @@ bool CheckAndAddLengthTooLargeErrorInformation(char *text, string type, int l, i
             errorInformation = "[Line length too large, exceed 10000] " + itos(yylineno-1) + "." + itos(l) + "-" + itos(yylineno-1) + "." +itos(r); 
             errorInformation += "\nLex analyse abort!";
             //cout << errorInformation << endl;
-            lexicalErrorInformation.push_back(errorInformation);
+            lexicalError.push_back(errorInformation);
             return true;
         }
         return false;
@@ -2305,7 +2305,7 @@ bool CheckAndAddLengthTooLargeErrorInformation(char *text, string type, int l, i
             string id = string(text);
             errorInformation = "[Identifier length too large, exceed 100] " + itos(yylineno-1) + "." + itos(l) + "-" + itos(yylineno-1) + "." + itos(r);
             //cout << errorInformation << endl;
-            lexicalErrorInformation.push_back(errorInformation);
+            lexicalError.push_back(errorInformation);
             return true;
         }
         return false;
