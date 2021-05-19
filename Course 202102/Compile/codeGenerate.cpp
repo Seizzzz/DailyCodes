@@ -88,21 +88,20 @@ ofstream fout;
 
 void codeGenerate(_Program* ASTRoot, string outFile) {
 	fout.open(outFile.c_str());
+	currSymbolTable = mainSymbolTable; //定位到主符号表
 	
-	currSymbolTable = mainSymbolTable;//定位到主符号表
-	getSubPrgmDeclare();//子程序声明
-	getConstList(ASTRoot->subProgram->constList, vecConstId, vecConstType, vecConstValue, currSymbolTable);//全局常量/主程序常量
-	getVariant(ASTRoot->subProgram->variantList, vecVariantId, vecVariantType, vecArraySize, currSymbolTable);//全局变量/主程序变量
-	getAllSubPrgmDefine(ASTRoot->subProgram);//子程序定义列表
-	currSymbolTable = mainSymbolTable;//定位到主符号表
-	getSubMainFunction(ASTRoot);//原PASCAL主程序对应C的程序头和语句体
+	getSubPrgmDeclare(); //获取子程序声明
+	getConstList(ASTRoot->subProgram->constList, vecConstId, vecConstType, vecConstValue, currSymbolTable); //获取全局常量
+	getVariant(ASTRoot->subProgram->variantList, vecVariantId, vecVariantType, vecArraySize, currSymbolTable); //获取全局变量
+	getAllSubPrgmDefine(ASTRoot->subProgram); //获取子程序定义
+	getSubMainFunction(ASTRoot); //获取主程序
 
-	genHeadFile();
-	genConst(vecConstId, vecConstType, vecConstValue);
-	genVariant(vecVariantId, vecVariantType, vecArraySize);
-	genSubPrgmDeclare();
-	genMain(ASTRoot);
-	genSubPrgmDefine();
+	genHeadFile(); //生成头文件
+	genConst(vecConstId, vecConstType, vecConstValue); //生成全局常量
+	genVariant(vecVariantId, vecVariantType, vecArraySize); //生成全局变量
+	genSubPrgmDeclare(); //生成子程序声明
+	genMain(ASTRoot); //生成main函数
+	genSubPrgmDefine(); //生成子程序定义
 
 	fout.close();
 }
@@ -141,7 +140,6 @@ string transformOpertion(string operation, int mode) {
 }
 
 void getConstList(vector<_Constant*>& vecAllConst, vector<string>& constIdList, vector<string>& constTypeList, vector<string>& constValueList, _SymbolTable* symbolTable) {
-	//初始化
 	constIdList.clear();
 	constTypeList.clear();
 	constValueList.clear();
@@ -154,13 +152,12 @@ void getConstList(vector<_Constant*>& vecAllConst, vector<string>& constIdList, 
 		if (record->type != "char" && record->isMinusShow)
 			constVal += "-";
 		constVal += record->value;
-		constTypeList.push_back(transformType(record->type));//从符号表获取常量类型
-		constValueList.push_back(constVal);//从符号表获取常量值，要求是string形式
+		constTypeList.push_back(transformType(record->type)); //获取常量类型
+		constValueList.push_back(constVal); //获取常量值
 	}
 }
 
 void getVariant(vector<_Variant*> variantList, vector<string>& variantIdList, vector<string>& variantTypeList, vector<vector<int>>& arraySizeList, _SymbolTable* symbolTable) {
-	//初始化
 	variantIdList.clear();
 	variantTypeList.clear();
 	arraySizeList.clear();
@@ -169,7 +166,7 @@ void getVariant(vector<_Variant*> variantList, vector<string>& variantIdList, ve
 	{
 		variantIdList.push_back(iter->variantId.first);
 		_SymbolRecord* record = findSymbolRecord(symbolTable, iter->variantId.first, 1);
-		variantTypeList.push_back(transformType(record->type));//从符号表获取类型
+		variantTypeList.push_back(transformType(record->type)); //获取类型
 		vector<pair<int, int>>& tmpRangeList = record->arrayRangeList;
 		vector<int> tmpRange;
 		for (auto range : tmpRangeList)
@@ -201,7 +198,6 @@ void getSubPrgmDeclare() {
 	}
 }
 
-//mode表示是否需要将PASCAL运算符转化为C运算符
 void getFunctionCall(_FunctionCall* functionCallNode, string& functionCall, int mode)
 {
 	functionCall = functionCallNode->functionId.first + "(";
@@ -210,59 +206,56 @@ void getFunctionCall(_FunctionCall* functionCallNode, string& functionCall, int 
 	for (int i = 0; i < functionCallNode->actualParaList.size(); i++)
 	{
 		if (i > 0) functionCall += ", ";
-		string expression; //需要检查对应的形参是否是引用参数
+		string expression; //形参是否为引用
 		getExpression(functionCallNode->actualParaList[i], expression, mode, record->isIdxParamRef(i + 1));
 		functionCall += expression;
 	}
-
 	functionCall += ")";
 }
 
-//mode表示是否需要将PASCAL运算符转化为C运算符
 int getExpression(_Expression* expressionNode, string& expression, int mode, bool isReferedActualPara) {
-	//返回值用于表示是否需要加括号
 	int flag;
-	if (expressionNode->type == "var") //如果是变量标识符
+	if (expressionNode->type == "var") //变量标识符
 	{
-		string variantRef;//这里应该一定是右值，所以无需特判
+		string variantRef;
 		getVariantRef(expressionNode->variantReference, variantRef, mode, isReferedActualPara);
 		expression += variantRef;
 		return 0;
 	}
-	else if (expressionNode->type == "integer") //如果是整数
+	else if (expressionNode->type == "integer") //整数
 	{
 		expression += expressionNode->strOfNum;
 		return 0;
 	}
-	else if (expressionNode->type == "real") //如果是浮点数
+	else if (expressionNode->type == "real") //浮点数
 	{
 		expression += expressionNode->strOfNum;
 		return 0;
 	}
-	else if (expressionNode->type == "char") //如果是字符常量
+	else if (expressionNode->type == "char") //字符
 	{
 		expression += string("'") + expressionNode->charVal + string("'");
 		return 0;
 	}
-	else if (expressionNode->type == "function") //如果是函数调用
+	else if (expressionNode->type == "function") //函数
 	{
 		string functionCall;
 		getFunctionCall(expressionNode->functionCall, functionCall, mode);
 		expression += functionCall;
 		return 0;
 	}
-	else if (expressionNode->type == "compound") //如果是复合表达式
+	else if (expressionNode->type == "compound") //复合表达式
 	{
-		if (expressionNode->operationType == "single") {//如果是单目运算符
+		if (expressionNode->operationType == "single") { //单目运算符
 			string tmp;
 			flag = getExpression(expressionNode->operand1, tmp, mode);
-			if (expressionNode->operation == "bracket") {//如果是括号
+			if (expressionNode->operation == "bracket") {//括号
 				expression += "(" + tmp + ")";
 				return 0;
 			}
-			if (expressionNode->operation == "minus")//如果是取相反数
+			if (expressionNode->operation == "minus") //取反
 				expression += " - ";
-			else if (expressionNode->operation == "not")//如果是取非
+			else if (expressionNode->operation == "not") //如果是取非
 				expression += " " + transformOpertion(expressionNode->operation, mode) + " ";
 			if (mode == 0 && flag > 0)
 				expression += "(" + tmp + ")";
@@ -270,7 +263,7 @@ int getExpression(_Expression* expressionNode, string& expression, int mode, boo
 				expression += tmp;
 			return 4;
 		}
-		else if (expressionNode->operationType == "mulop") {//如果是"mulop"
+		else if (expressionNode->operationType == "mulop") {
 			string tmp;
 			flag = getExpression(expressionNode->operand1, tmp, mode);
 			if (flag != 0 && flag < 3)
@@ -285,7 +278,7 @@ int getExpression(_Expression* expressionNode, string& expression, int mode, boo
 				expression += tmp;
 			return 3;
 		}
-		else if (expressionNode->operationType == "addop") {//如果是"addop"
+		else if (expressionNode->operationType == "addop") {
 			string tmp;
 			flag = getExpression(expressionNode->operand1, tmp, mode);
 			if (flag == 1)
@@ -300,7 +293,7 @@ int getExpression(_Expression* expressionNode, string& expression, int mode, boo
 				expression += tmp;
 			return 2;
 		}
-		else if (expressionNode->operationType == "relop") {//如果是"relop"
+		else if (expressionNode->operationType == "relop") {
 			string tmp;
 			getExpression(expressionNode->operand1, tmp, mode);
 			expression += tmp + " " + transformOpertion(expressionNode->operation, mode) + " ";
@@ -314,14 +307,9 @@ int getExpression(_Expression* expressionNode, string& expression, int mode, boo
 	return -1;
 }
 
-//mode表示是否需要将PASCAL运算符转化为C运算符
-//有五种kind,"array","var","constant","function call","function return reference"
-//左值特判
 void getVariantRef(_VariantReference* variantRefNode, string& variantRef, int mode, bool isReferedActualPara)
 {
 	variantRef = variantRefNode->variantId.first;
-	//如果是函数，一定是右值，如果是左值，代码逻辑保证了不会调用该函数
-	//通过了语义分析，保证了该函数形参个数一定为0
 	if (mode == 0 && (variantRefNode->kind == "var" || variantRefNode->kind == "array")) {
 		bool isRefered = isParamRef(currSymbolTable, variantRefNode->variantId.first);
 		if (isRefered) {
@@ -338,9 +326,9 @@ void getVariantRef(_VariantReference* variantRefNode, string& variantRef, int mo
 	if (variantRefNode->kind != "array")
 		return;
 
-	//这里得查符号表，找出数组定义时每一维的下界
+	//查符号表，找出数组定义时每一维的下界
 	_SymbolRecord* record = findSymbolRecord(currSymbolTable, variantRefNode->variantId.first);
-	if (mode == 0) { //如果生成C代码
+	if (mode == 0) {
 		for (int i = 0; i < variantRefNode->expressionList.size(); i++) {
 			string expression;
 			getExpression(variantRefNode->expressionList[i], expression, mode);
@@ -355,7 +343,7 @@ void getVariantRef(_VariantReference* variantRefNode, string& variantRef, int mo
 			variantRef += "[" + expression + delta + "]";
 		}
 	}
-	else {//如果按照原样输出
+	else { //原样输出
 		variantRef += "[";
 		for (int i = 0; i < variantRefNode->expressionList.size(); i++) {
 			string expression;
@@ -421,12 +409,12 @@ void getStatement(_Statement* statementNode, vector<pair<string, int>>& vecState
 		}
 	}
 	else if (statementNode->type == "assign")
-	{//左值特判
+	{
 		string variantRef;
 		_AssignStatement* assignStatementNode = reinterpret_cast<_AssignStatement*>(statementNode);
 		string expression;
 		getExpression(assignStatementNode->expression, expression);
-		if (assignStatementNode->variantReference->kind == "function return reference") {//如果是返回值语句
+		if (assignStatementNode->variantReference->kind == "function return reference") {//返回语句
 			variantRef = "return (" + expression + ");";
 			vecStatement.emplace_back(make_pair(variantRef, retract));
 		}
@@ -478,6 +466,7 @@ void getAllSubPrgmDefine(_SubProgram* subProgramNode)
 
 void getSubMainFunction(_Program* ASTRoot)
 {
+	currSymbolTable = mainSymbolTable;
 	subMainFunctionDeclare = "void " + ASTRoot->programId.first + "()";
 	getStatement(ASTRoot->subProgram->compound, vecStatement, 1, 1);
 }
@@ -515,7 +504,7 @@ bool getLibSubPrgm(_ProcedureCall* procedureCall, vector<pair<string, int>>& vec
 			return true;
 		}
 		proCall += "printf(\"";
-		string exp;//exp按顺序保存了表达式
+		string exp; //exp按顺序保存了表达式
 		for (int i = 0; i < procedureCall->actualParaList.size(); i++) {
 			string expression, typeFormat;
 			getExpression(procedureCall->actualParaList[i], expression);
@@ -564,6 +553,7 @@ bool getLibSubPrgm(_ProcedureCall* procedureCall, vector<pair<string, int>>& vec
 		proCall += "\"" + exp + ");";
 		vecStatement.emplace_back(make_pair(proCall, retract));
 	}
+	else return false;
 	return true;
 }
 
@@ -572,7 +562,7 @@ void genHeadFile()
 	vecHeadFile.emplace_back("stdio.h");
 	vecHeadFile.emplace_back("stdbool.h");
 
-	fout << "//Head files" << endl;
+	fout << "//Headfile" << endl;
 	for (auto iter : vecHeadFile) fout << "#include<" << iter << ">" << endl;
 	fout << endl;
 }
@@ -581,7 +571,7 @@ void genConst(vector<string>& constIdList, vector<string>& constTypeList, vector
 {
 	const int n = int(constIdList.size());
 	if (!n) return;
-	if (!retract) fout << "//Overall constant definiton" << endl;
+	if (!retract) fout << "//Overall Constant" << endl;
 
 	for (int i = 0; i < n; i++)
 	{
@@ -596,7 +586,7 @@ void genConst(vector<string>& constIdList, vector<string>& constTypeList, vector
 void genVariant(vector<string>& variantIdList, vector<string>& variantTypeList, vector<vector<int>>& arraySizeList, int retract) {
 	int n = int(variantIdList.size());
 	if (!n) return;
-	if (!retract) fout << "//Overall variable definition" << endl;
+	if (!retract) fout << "//Overall Variable" << endl;
 
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < retract; j++)
@@ -611,7 +601,7 @@ void genVariant(vector<string>& variantIdList, vector<string>& variantTypeList, 
 	fout << endl;
 }
 
-void genSubPrgmDeclare(const subPrgmDeclare& tmp, int flag) //flag==0时表示接口声明,flag==1时表示定义时的子程序头
+void genSubPrgmDeclare(const subPrgmDeclare& tmp, int flag)
 {
 	string str = tmp.returnType.empty() ? "void" : tmp.returnType;
 	fout << str << " " << tmp.id << "(";
@@ -632,10 +622,9 @@ void genSubPrgmDeclare(const subPrgmDeclare& tmp, int flag) //flag==0时表示�
 
 void genSubPrgmDeclare()
 {
-	if (vecSubPrgmDeclare.empty()) return;
-	fout << "//Subprogram Declare" << endl;
-
-	fout << subMainFunctionDeclare << ";" << endl; //main
+	fout << "//Function Declare" << endl;
+	
+	fout << subMainFunctionDeclare << ";" << endl; //主程序
 	for (const auto iter : vecSubPrgmDeclare)
 		genSubPrgmDeclare(iter, 0);
 
@@ -652,15 +641,14 @@ void genStatement(pair<string, int>& tmp)
 
 void genAllStatement(vector<pair<string, int>>& vec)
 {
-	int n = int(vec.size());
-	for (int i = 0; i < n; i++)
-		genStatement(vec[i]);
-	vec.clear();//清空
+	for (auto iter : vec)
+		genStatement(iter);
+	vec.clear();
 }
 
 void genSubPrgmDefine()
 {
-	fout << "//Subprogram definition" << endl;
+	fout << "//Function Implement" << endl;
 	
 	//主程序
 	fout << subMainFunctionDeclare << endl;
@@ -678,13 +666,11 @@ void genSubPrgmDefine()
 		genAllStatement(def[i].vecStatement);
 		fout << "}" << endl << endl;
 	}
-
-	fout << endl;
 }
 
 void genMain(_Program* ASTRoot)
 {
-	fout << "//Main function" << endl;
+	fout << "//Main" << endl;
 	fout << "int main()\n{\n\t";
 	fout << ASTRoot->programId.first + "()";
 	fout << "; \n\treturn 0; \n}\n";
