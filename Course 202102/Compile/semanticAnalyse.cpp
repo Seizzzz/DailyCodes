@@ -18,31 +18,31 @@ if(errorCount>=errorBound){\
 
 using namespace std;
 
-extern _SymbolTable* mainSymbolTable; //主符号表
-extern _SymbolTable* currSymbolTable; //当前符号表
-extern _SymbolRecord* findSymbolRecord(_SymbolTable* currSymbolTable, string id, int mode = 0);//从符号表中找出id对应的记录
-extern void getFunctionCall(_FunctionCall* functionCallNode, string& functionCall, int mode = 0);//获取函数调用
-extern int getExpression(_Expression* expressionNode, string& expression, int mode = 0, bool isReferedActualPara = false);//获取表达式
+extern _SymbolTable* mainSymbolTable; 
+extern _SymbolTable* currSymbolTable; 
+extern _SymbolRecord* findSymbolRecord(_SymbolTable* currSymbolTable, string id, int mode = 0);
+extern void getFunctionCall(_FunctionCall* functionCallNode, string& functionCall, int mode = 0);
+extern int getExpression(_Expression* expressionNode, string& expression, int mode = 0, bool isReferedActualPara = false);
 extern void getVariantRef(_VariantReference* variantRefNode, string& variantRef, int mode = 0, bool isReferedActualPara = false);//获取变量引用
 extern int str2int(string str);
 
-vector<string> semanticError; //错误信息
+vector<string> semanticError; //存储错误信息的容器
 
 void SemanticAnalyse(_Program* ASTRoot);
 
 void newMainSymbolTable();//创建主符号表并初始化
 void newSubSymbolTable();//创建子符号表并初始化
 
-string analyseVariantRef(_VariantReference* variantReference); //对变量引用进行语义分析
-void analyseStatement(_Statement* statement); //对语句进行语义分析
-void analyseSubPrgmDefine(_FunctionDefinition* functionDefinition); //对子程序定义进行语义分析
-void analyseVariant(_Variant* variant); //对变量定义进行语义分析
-void analyseConst(_Constant* constant); //对常量定义进行语义分析
-void analyseSubPrgm(_SubProgram* subprogram); //对子程序进行语义分析
+string analyseVariantRef(_VariantReference* variantReference); 
+void analyseStatement(_Statement* statement); 
+void analyseSubPrgmDefine(_FunctionDefinition* functionDefinition); 
+void analyseVariant(_Variant* variant); 
+void analyseConst(_Constant* constant); 
+void analyseSubPrgm(_SubProgram* subprogram); 
 void analysePrgm(_Program* program); //对主程序进行语义分析
-void analyseFormalParam(_FormalParameter* formalParameter); //对形参进行语义分析
-string analyseFunctionCall(_FunctionCall* functionCall); //对函数调用进行语义分析
-string analyseExpression(_Expression* expression); //对表达式进行语义分析
+void analyseFormalParam(_FormalParameter* formalParameter); 
+string analyseFunctionCall(_FunctionCall* functionCall); 
+string analyseExpression(_Expression* expression); 
 bool isIdIllgal(string id, int lineNumber); //检查标识符是否与库程序名、主程序名、主程序参数同名
 
 string itos(int num);//将int转化为string
@@ -85,31 +85,22 @@ string analyseVariantRef(_VariantReference* variantReference) {
 		return "";
 	}
 	_SymbolRecord* record = findSymbolRecord(currSymbolTable, variantReference->variantId.first);
-	if (record == NULL) {//未定义 //checked
+	if (record == NULL) {   
 		addUndefinedError(variantReference->variantId.first, variantReference->variantId.second);
 		return variantReference->variantType = "error";//无法找到变量引用的类型
 	}
-	//首先必须是函数
-	//作为左值必须是当前函数名
-	//作为右值则可以是任意函数名（递归调用也可以）
-	//是左值还是右值、是过程还是函数、是当前符号表对应的子程序名称、还是别的子程序名称
-
 	if (variantReference->flag == 0) {//如果是非数组
 		if (record->flag == "(sub)program name") {
-			if (record->subprogramType == "procedure") {//这个包含了查到主程序名的情况
-				//这里有空的话，最好把查到主程序名的报错单独拿出来 hhh checked
+			if (record->subprogramType == "procedure") {
 				addGeneralError("[Invalid reference] <Line " + itos(variantReference->variantId.second) + "> Procedure name \"" + record->id + "\" can't be referenced");
 				return variantReference->variantType = "error";
 			}
-			//如果是函数，那么一定是当前符号表
-			//如果是左值，那么是返回语句，不需要关注参数
-			//如果是右值，那么是递归调用，需要关注参数，即检查形式参数个数是否是0个
-			if (variantReference->locFlag == -1) { //如果是左值
+			
+			if (variantReference->locFlag == -1) { //-1代表是左值
 				variantReference->kind = "function return reference";
 				return variantReference->variantType = record->type;
 			}
-			//如果是右值
-			if (record->amount != 0) {//如果形参个数不为0 checked 递归调用
+			if (record->amount != 0) {//如果形参个数不为0    递归调用
 				addNumberError(variantReference->variantId.first, variantReference->variantId.second, 0, record->amount, "function");
 				return variantReference->variantType = record->type;
 			}
@@ -122,18 +113,18 @@ string analyseVariantRef(_VariantReference* variantReference) {
 			variantReference->kind = "function";
 			//不能作为左值，必须作为右值，且形参个数必须为0
 			//被识别为variantReference的函数调用一定不含实参，所以需要检查形参个数
-			if (variantReference->locFlag == -1) {//如果是左值 checked
+			if (variantReference->locFlag == -1) {//如果是左值   
 				addGeneralError("[Invalid reference!] <Line " + itos(variantReference->variantId.second) + "> function name \"" + record->id + "\" can't be referenced as l-value.");
 				return variantReference->variantType = "error";
 			}
 			//如果是右值
-			if (record->amount != 0) {//如果形参个数不为0 checked
+			if (record->amount != 0) {//如果形参个数不为0   
 				addNumberError(variantReference->variantId.first, variantReference->variantId.second, 0, record->amount, "function");
 				return variantReference->variantType = record->type;
 			}
 			return variantReference->variantType = record->type;
 		}
-		//checked
+		 
 		if (!(record->flag == "value parameter" || record->flag == "var parameter" || record->flag == "normal variant" || record->flag == "constant")) {
 			addGeneralError("[Invalid reference!] <Line " + itos(variantReference->variantId.second) + "> \"" + variantReference->variantId.first + "\" is a " + record->flag + ", it can't be referenced.");
 			return variantReference->variantType = "error";
@@ -143,13 +134,13 @@ string analyseVariantRef(_VariantReference* variantReference) {
 			variantReference->kind = "constant";
 		return variantReference->variantType = record->type;
 	}
-	else if (variantReference->flag == 1) {//如果是数组
-		if (record->flag != "array") {//如果符号表中记录的不是数组 checked
+	else if (variantReference->flag == 1) {//flag是1代表是数组
+		if (record->flag != "array") {//如果符号表中记录的不是数组 
 			addPreFlagError(variantReference->variantId.first, variantReference->variantId.second, "array", record->lineNumber, record->flag);
 			return variantReference->variantType = "error";
 		}
 		variantReference->kind = "array";
-		//checked
+		 
 		if (variantReference->expressionList.size() != record->amount) {//如果引用时的下标维数和符号表所存不一致
 			addNumberError(variantReference->variantId.first, variantReference->variantId.second, int(variantReference->expressionList.size()), record->amount, "array");
 			variantReference->variantType = "error";
@@ -158,12 +149,12 @@ string analyseVariantRef(_VariantReference* variantReference) {
 		variantReference->variantType = record->type;
 		for (int i = 0; i < variantReference->expressionList.size(); i++) {
 			string type = analyseExpression(variantReference->expressionList[i]);
-			//检查下标表达式的类型是否是整型 checked
+			//检查下标表达式的类型是否是整型   
 			if (type != "integer") {
 				addExpressionTypeError(variantReference->expressionList[i], type, "integer", itos(i + 1) + "th index of array \"" + variantReference->variantId.first + "\"");
 				variantReference->variantType = "error";
 			}
-			//检查越界 checked
+			//检查越界   
 			if (variantReference->expressionList[i]->totalIntValueValid) {
 				if (!record->isIdxOutRange(i, variantReference->expressionList[i]->totalIntValue)) {
 					addArrayRangeOutOfBoundError(variantReference->expressionList[i], variantReference->variantId.first, i, record->arrayRangeList[i]);
@@ -179,7 +170,6 @@ string analyseVariantRef(_VariantReference* variantReference) {
 	}
 }
 
-//对语句进行语义分析
 void analyseStatement(_Statement* statement) {
 	if (statement == NULL) {
 		cout << "[analyseStatement] pointer of _Statement is null" << endl;
@@ -187,59 +177,57 @@ void analyseStatement(_Statement* statement) {
 	}
 	if (statement->type == "compound")
 	{
-		_Compound* compound = reinterpret_cast<_Compound*>(statement);//对复合语句块中的每一条语句进行语义分析
+		_Compound* compound = reinterpret_cast<_Compound*>(statement);
 		for (auto iter : compound->statementList)
 			analyseStatement(iter);
 	}
 	else if (statement->type == "repeat") {
 		_RepeatStatement* repeatStatement = reinterpret_cast<_RepeatStatement*>(statement);
 		string type = analyseExpression(repeatStatement->condition);
-		if (type != "boolean") {//repeat语句类型检查,condition表达式类型检查 checked
+		if (type != "boolean") {//repeat语句类型检查,condition表达式类型检查   
 			addExpressionTypeError(repeatStatement->condition, type, "boolean", "condition of repeat-until statement");
 			repeatStatement->statementType = "error";
 		}
 		else
 			repeatStatement->statementType = "void";
-		analyseStatement(repeatStatement->_do);//对循环体语句进行语义分析
+		analyseStatement(repeatStatement->_do);
 	}
 	else if (statement->type == "while") {
 		_WhileStatement* whileStatement = reinterpret_cast<_WhileStatement*>(statement);
 		string type = analyseExpression(whileStatement->condition);
-		if (type != "boolean") {//while语句类型检查,condition表达式类型检查 checked
+		if (type != "boolean") {//while语句类型检查,condition表达式类型检查   
 			addExpressionTypeError(whileStatement->condition, type, "boolean", "condition of while statement");
 			whileStatement->statementType = "error";
 		}
 		else
 			whileStatement->statementType = "void";
-		analyseStatement(whileStatement->_do);//对循环体语句进行语义分析
+		analyseStatement(whileStatement->_do);
 	}
 	else if (statement->type == "for") {
 		_ForStatement* forStatement = reinterpret_cast<_ForStatement*>(statement);
 		//检查循环变量是否已经定义，如已经定义，是否为integer型变量
 		_SymbolRecord* record = findSymbolRecord(currSymbolTable, forStatement->id.first);
-		if (record == NULL) {//循环变量未定义，错误信息 checked
+		if (record == NULL) {//循环变量未定义，错误信息   
 			addUndefinedError(forStatement->id.first, forStatement->id.second);
 			return;
 		}
-		//如果无法作为循环变量 checked
+		//如果无法作为循环变量   
 		if (!(record->flag == "value parameter" || record->flag == "var parameter" || record->flag == "normal variant")) {//如果当前符号种类不可能作为循环变量
 			addPreFlagError(forStatement->id.first, forStatement->id.second, "value parameter, var parameter or normal variant", record->lineNumber, record->flag);
 			return;
 		}
-		//如果类型不是整型 checked
 		if (record->type != "integer") {
 			addUsageTypeError(forStatement->id.first, forStatement->id.second, record->type, "cyclic variable of for statement", "integer");
 			return;
 		}
-		//for语句类型检查,start和end表达式类型检查
 		forStatement->statementType = "void";
 		string type = analyseExpression(forStatement->start);
-		if (type != "integer") { //checked
+		if (type != "integer") {  
 			addExpressionTypeError(forStatement->start, type, "integer", "start value of for statement");
 			forStatement->statementType = "error";
 		}
 		type = analyseExpression(forStatement->end);
-		if (type != "integer") { //checked
+		if (type != "integer") {  
 			addExpressionTypeError(forStatement->end, type, "integer", "end value of for statement");
 			forStatement->statementType = "error";
 		}
@@ -249,7 +237,7 @@ void analyseStatement(_Statement* statement) {
 	else if (statement->type == "if") {
 		_IfStatement* ifStatement = reinterpret_cast<_IfStatement*>(statement);
 		string type = analyseExpression(ifStatement->condition);
-		if (type != "boolean") {//if语句类型检查,condition表达式类型检查 checked
+		if (type != "boolean") {//if语句类型检查,condition表达式类型检查   
 			addExpressionTypeError(ifStatement->condition, type, "boolean", "condition of if statement");
 			ifStatement->statementType = "error";
 		}
@@ -266,16 +254,14 @@ void analyseStatement(_Statement* statement) {
 		assignStatement->variantReference->locFlag = -1;//标记为左值
 		string leftType = analyseVariantRef(assignStatement->variantReference);
 		if (assignStatement->variantReference->kind == "constant") {
-			//左值不能为常量 checked
+			//左值不能为常量   
 			addGeneralError("[Constant as l-value error!] <Line" + itos(assignStatement->variantReference->variantId.second) + "> Costant \"" + assignStatement->variantReference->variantId.first + "\" can't be referenced as l-value.");
 			return;
 		}
-		//对右值表达式进行类型检查,获得rightType
 		string rightType = analyseExpression(assignStatement->expression);
-		if (assignStatement->variantReference->kind == "function return reference") {//如果是返回值语句
-			//需检查返回值表达式是否和函数返回值类型一致
+		if (assignStatement->variantReference->kind == "function return reference") {
 			if (assignStatement->variantReference->variantType != rightType && !(assignStatement->variantReference->variantType == "real" && rightType == "integer")) {
-				//checked
+				 
 				addGeneralError("[Return type of funciton mismatch!] <Line " + itos(assignStatement->expression->lineNumber) + "> The type of return expression is " + rightType + " ,but not " + assignStatement->variantReference->variantType + " as function \"" + assignStatement->variantReference->variantId.first + "\" defined.");
 				assignStatement->statementType = "error";
 			}
@@ -284,7 +270,7 @@ void analyseStatement(_Statement* statement) {
 		}
 		//比较左值和右值类型,获得赋值语句的类型；类型不同时，只支持整型到实型的隐式转换
 		if (leftType != rightType && !(leftType == "real" && rightType == "integer")) {
-			//checked
+			 
 			addAssignTypeMismatchError(assignStatement->variantReference, assignStatement->expression);
 			assignStatement->statementType = "error";
 		}
@@ -293,19 +279,16 @@ void analyseStatement(_Statement* statement) {
 	}
 	else if (statement->type == "procedure") {//read的参数只能是变量或数组元素;
 		_ProcedureCall* procedureCall = reinterpret_cast<_ProcedureCall*>(statement);
-		//通过procedureId查表，获得参数个数、参数类型等信息
-		//www
-		//_SymbolRecord *record = findSymbolRecord(currSymbolTable, procedureCall->procedureId.first);
 		_SymbolRecord* record = findSymbolRecord(mainSymbolTable, procedureCall->procedureId.first);
 		if (record == NULL)
 			record = findSymbolRecord(currSymbolTable, procedureCall->procedureId.first, 1);
 		procedureCall->statementType = "void";
-		if (record == NULL) {//未定义 checked
+		if (record == NULL) {    
 			addUndefinedError(procedureCall->procedureId.first, procedureCall->procedureId.second);
 			procedureCall->statementType = "error";
 			return;
 		}
-		if (record->flag != "procedure") {//如果不是过程 checked
+		if (record->flag != "procedure") {//如果不是过程   
 			addPreFlagError(procedureCall->procedureId.first, procedureCall->procedureId.second, "procedure", record->lineNumber, record->flag);
 			procedureCall->statementType = "error";
 			return;
@@ -317,7 +300,7 @@ void analyseStatement(_Statement* statement) {
 			//所以需判断当前程序是过程还是函数
 			if (currSymbolTable->recordList[0]->subprogramType == "procedure") {//如果是过程
 				//exit不能带参数表达式
-				if (procedureCall->actualParaList.size() != 0) {//如果实参个数不为0 checked
+				if (procedureCall->actualParaList.size() != 0) {//如果实参个数不为0   
 					addGeneralError("[Return value redundancy!] <Line " + itos(procedureCall->procedureId.second) + "> Number of return value of procedure must be 0, that is, exit must have no actual parameters.");
 					procedureCall->statementType = "error";
 				}
@@ -325,16 +308,16 @@ void analyseStatement(_Statement* statement) {
 			}
 			//如果是函数
 			if (procedureCall->actualParaList.size() != 1) {//如果实参个数不为1
-				if (procedureCall->actualParaList.size() == 0) //checked
+				if (procedureCall->actualParaList.size() == 0)  
 					addGeneralError("[Return value missing!] <Line " + itos(procedureCall->procedureId.second) + "> Number of return value of function must be 1, that is, exit must have 1 actual parameters.");
-				else //checked
+				else  
 					addGeneralError("[Return value redundancy!] <Line " + itos(procedureCall->procedureId.second) + "> Number of return value of function must be 1, that is, exit must have 1 actual parameters.");
 				return;
 			}
 			//如果实参个数为1，检查实参表达式的类型，检查是否与函数返回值类型一致
 			string returnType = analyseExpression(procedureCall->actualParaList[0]);
 			if (currSymbolTable->recordList[0]->type != returnType && !(currSymbolTable->recordList[0]->type == "real" && returnType == "integer")) {
-				//checked
+				 
 				addGeneralError("[Return type of funciton mismatch!] <Line " + itos(procedureCall->actualParaList[0]->lineNumber) + "> The type of return expression is " + returnType + " ,but not " + currSymbolTable->recordList[0]->type + " as function \"" + currSymbolTable->recordList[0]->id + "\" defined.");
 				procedureCall->statementType = "error";
 			}
@@ -342,7 +325,7 @@ void analyseStatement(_Statement* statement) {
 			return;
 		}
 		if (record->id == "read" || record->id == "write") {
-			if (procedureCall->actualParaList.size() == 0) { //read、write的参数个数不能为0 checked
+			if (procedureCall->actualParaList.size() == 0) { //read、write的参数个数不能为0   
 				string tmp = record->id;
 				tmp[0] -= 'a' - 'A';
 				addGeneralError("[" + tmp + " actual parameter missing!] <Line " + itos(procedureCall->procedureId.second) + "> procedure \"" + record->id + "\" must have at least one actual parameter.");
@@ -370,7 +353,7 @@ void analyseStatement(_Statement* statement) {
 			}
 			return;
 		}
-		if (procedureCall->actualParaList.size() != record->amount) { //checked
+		if (procedureCall->actualParaList.size() != record->amount) {  
 			addNumberError(procedureCall->procedureId.first, procedureCall->procedureId.second, int(procedureCall->actualParaList.size()), record->amount, "procedure");
 			procedureCall->statementType = "error";
 			return;
@@ -381,21 +364,21 @@ void analyseStatement(_Statement* statement) {
 			string formalType = record->getIdxParamType(i + 1);
 			bool isRefered = record->isIdxParamRef(i + 1);
 			if (isRefered && !(procedureCall->actualParaList[i]->type == "var" && (procedureCall->actualParaList[i]->variantReference->kind == "var" || procedureCall->actualParaList[i]->variantReference->kind == "array"))) {
-				//该表达式不能作为引用形参对应的实参 checked
+				//该表达式不能作为引用形参对应的实参   
 				addGeneralError("[Referenced actual parameter error!] <Line " + itos(procedureCall->actualParaList[i]->lineNumber) + "> The " + itos(i + 1) + "th actual parameter expression should be a normal variable、value parameter、referenced parameter or array element.");
 				continue;
 			}
 			//if(isRefered && procedureCall->actualParaList[i]->type==)
 			if (!isRefered) { //传值参数支持integer到real的隐式类型转换
 				if (actualType != formalType && !(actualType == "integer" && formalType == "real")) { //如果类型不一致
-					//checked
+					 
 					addExpressionTypeError(procedureCall->actualParaList[i], actualType, formalType, itos(i + 1) + "th actual parameter of procedure call of \"" + procedureCall->procedureId.first + "\"");
 					procedureCall->statementType = "error";
 				}
 			}
 			else { //引用参数需保持类型强一致
 				if (actualType != formalType) { //如果类型不一致
-					//checked
+					 
 					addExpressionTypeError(procedureCall->actualParaList[i], actualType, formalType, itos(i + 1) + "th actual parameter of procedure call of \"" + procedureCall->procedureId.first + "\"");
 					procedureCall->statementType = "error";
 				}
@@ -434,7 +417,7 @@ void analyseSubPrgmDefine(_FunctionDefinition* functionDefinition) {
 		return;
 	}
 	_SymbolRecord* record = findSymbolRecord(currSymbolTable, functionDefinition->functionID.first, 1);
-	if (record != NULL) {//重定义 checked
+	if (record != NULL) {//重定义   
 		addDuplicateDefinitionError(record->id, record->lineNumber, record->flag, record->type, functionDefinition->functionID.second);
 		return;
 	}
@@ -453,20 +436,16 @@ void analyseSubPrgmDefine(_FunctionDefinition* functionDefinition) {
 	else//如果是函数
 		mainSymbolTable->addFunction(functionDefinition->functionID.first, functionDefinition->functionID.second, functionDefinition->type.first, int(functionDefinition->formalParaList.size()), currSymbolTable);
 
-	//对形式参数列表进行语义分析，并将形式参数添加到子符号表中
+	
 	for (auto iter : functionDefinition->formalParaList)
 		analyseFormalParam(iter);
-	//对常量定义进行语义分析
 	for (auto iter : functionDefinition->constList)
 		analyseConst(iter);
-	//对变量定义进行语义分析
 	for (auto iter : functionDefinition->variantList)
 		analyseVariant(iter);
-	//对compound进行语义分析
 	analyseStatement(reinterpret_cast<_Statement*>(functionDefinition->compound));
 }
 
-//对变量定义进行语义分析
 void analyseVariant(_Variant* variant) {
 	if (variant == NULL) {
 		cout << "[analyseVariant] pointer of _Variant is null" << endl;
@@ -485,7 +464,7 @@ void analyseVariant(_Variant* variant) {
 		//数组定义时，上下界的限制是上界必须大于等于下界；按照文法定义，上下界均为无符号数，且通过了语法分析，就一定是无符号数
 		vector<pair<int, int>>& tmp = variant->type->arrayRangeList;
 		for (int i = 0; i < tmp.size(); i++) {
-			if (tmp[i].first > tmp[i].second) { //checked
+			if (tmp[i].first > tmp[i].second) {  
 				addArrayRangeUpSideDownError(variant->variantId.first, variant->variantId.second, i + 1, tmp[i].first, tmp[i].second);
 				tmp[i].second = tmp[i].first; //如果上界小于下界，将上界设置为下界
 			}
@@ -504,17 +483,17 @@ void analyseConst(_Constant* constant) {
 	_SymbolRecord* record = findSymbolRecord(currSymbolTable, constant->constId.first, 1);
 	if (isIdIllgal(constant->constId.first, constant->constId.second))
 		return;
-	if (record != NULL) {//重定义 checked
+	if (record != NULL) {//重定义   
 		addDuplicateDefinitionError(record->id, record->lineNumber, record->flag, record->type, constant->constId.second);
 		return;
 	}
 	if (constant->type == "id") { //如果该常量由另外的常量标识符定义
 		_SymbolRecord* preRecord = findSymbolRecord(currSymbolTable, constant->valueId.first);
-		if (preRecord == NULL) {//未定义 checked
+		if (preRecord == NULL) {    
 			addUndefinedError(constant->valueId.first, constant->valueId.second);
 			return;
 		}
-		if (preRecord->flag != "constant") {//如果不是常量 checked
+		if (preRecord->flag != "constant") {//如果不是常量   
 			addPreFlagError(constant->valueId.first, constant->valueId.second, "constant", preRecord->lineNumber, preRecord->flag);
 			return;
 		}
@@ -551,11 +530,11 @@ string analyseFunctionCall(_FunctionCall* functionCall) {
 	_SymbolRecord* record = findSymbolRecord(mainSymbolTable, functionCall->functionId.first);
 	if (record == NULL)
 		record = findSymbolRecord(currSymbolTable, functionCall->functionId.first, 1);
-	if (record == NULL) {//未定义 checked
+	if (record == NULL) {    
 		addUndefinedError(functionCall->functionId.first, functionCall->functionId.second);
 		return functionCall->returnType = "error";
 	}
-	if (record->flag != "function") {//不是函数 checked
+	if (record->flag != "function") {//不是函数   
 		addPreFlagError(functionCall->functionId.first, functionCall->functionId.second, "function", record->lineNumber, record->flag);
 		return functionCall->returnType = "error";
 	}
@@ -564,7 +543,7 @@ string analyseFunctionCall(_FunctionCall* functionCall) {
 			analyseExpression(iter);
 		return functionCall->returnType = record->type;
 	}
-	if (functionCall->actualParaList.size() != record->amount) {//参数个数不一致 checked
+	if (functionCall->actualParaList.size() != record->amount) {//参数个数不一致   
 		addNumberError(functionCall->functionId.first, functionCall->functionId.second, int(functionCall->actualParaList.size()), record->amount, "function");
 		return functionCall->returnType = record->type;
 	}
@@ -574,16 +553,16 @@ string analyseFunctionCall(_FunctionCall* functionCall) {
 		string formalType = record->getIdxParamType(i + 1);
 		bool isRefered = record->isIdxParamRef(i + 1);
 		if (isRefered && !(functionCall->actualParaList[i]->type == "var" && (functionCall->actualParaList[i]->variantReference->kind == "var" || functionCall->actualParaList[i]->variantReference->kind == "array"))) {
-			//该表达式不能作为引用形参对应的实参 checked
+			//该表达式不能作为引用形参对应的实参   
 			addGeneralError("[Referenced actual parameter error!] <Line " + itos(functionCall->actualParaList[i]->lineNumber) + "> The " + itos(i + 1) + "th actual parameter expression should be a normal variable、value parameter、referenced parameter or array element.");
 			continue;
 		}
 		if (!isRefered) { //传值参数支持从integer到real的隐式类型转换
-			if (actualType != formalType && !(actualType == "integer" && formalType == "real")) //checked
+			if (actualType != formalType && !(actualType == "integer" && formalType == "real"))  
 				addExpressionTypeError(functionCall->actualParaList[i], actualType, formalType, itos(i + 1) + "th actual parameter of function call of \"" + functionCall->functionId.first + "\"");
 		}
 		else { //引用参数需保持类型强一致
-			if (actualType != formalType) //checked
+			if (actualType != formalType)  
 				addExpressionTypeError(functionCall->actualParaList[i], actualType, formalType, itos(i + 1) + "th actual parameter of function call of \"" + functionCall->functionId.first + "\"");
 		}
 	}
@@ -633,7 +612,7 @@ string analyseExpression(_Expression* expression) {
 			if ((epType1 == epType2 && epType1 != "error") || (epType1 == "integer" && epType2 == "real") || (epType1 == "real" && epType2 == "integer"))
 				return expression->expressionType = "boolean";
 			else {
-				if (epType1 != epType2 && epType1 != "error" && epType2 != "error") //checked
+				if (epType1 != epType2 && epType1 != "error" && epType2 != "error")  
 					addOperandExpressionsTypeMismatchError(expression->operand1, expression->operand2);
 				return expression->expressionType = "error";
 			}
@@ -643,7 +622,7 @@ string analyseExpression(_Expression* expression) {
 			if (type == "boolean")
 				return expression->expressionType = "boolean";
 			else {
-				if (type != "error" && type != "boolean") //checked
+				if (type != "error" && type != "boolean")  
 					addSingleOperandExpressionTypeMismatchError(expression->operand1, "boolean");
 				return expression->expressionType = "error";
 			}
@@ -657,7 +636,7 @@ string analyseExpression(_Expression* expression) {
 			if (epType == "integer" || epType == "real")
 				return expression->expressionType = epType;
 			else {
-				if (epType != "error" && epType != "integer" && epType != "real") //checked
+				if (epType != "error" && epType != "integer" && epType != "real")  
 					addSingleOperandExpressionTypeMismatchError(expression->operand1, "integer or real");
 				return expression->expressionType = "error";
 			}
@@ -673,7 +652,7 @@ string analyseExpression(_Expression* expression) {
 		else if (expression->operation == "+" || expression->operation == "-" || expression->operation == "*" || expression->operation == "/") {
 			string epType1 = analyseExpression(expression->operand1);
 			string epType2 = analyseExpression(expression->operand2);
-			//checked
+			 
 			if (expression->operation == "/" && epType2 == "integer" && expression->operand2->totalIntValueValid && expression->operand2->totalIntValue == 0)
 				addDivideZeroError(expression->operation, expression->operand2);
 			if (epType1 == "integer" && epType2 == "integer" && expression->operand1->totalIntValueValid && expression->operand2->totalIntValueValid) {
@@ -692,16 +671,16 @@ string analyseExpression(_Expression* expression) {
 					return expression->expressionType = "integer";
 				return expression->expressionType = "real";
 			}
-			if (epType1 != "error" && epType1 != "integer" && epType1 != "real") //checked
+			if (epType1 != "error" && epType1 != "integer" && epType1 != "real")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand1, "integer or real");
-			if (epType2 != "error" && epType2 != "integer" && epType2 != "real") //checked
+			if (epType2 != "error" && epType2 != "integer" && epType2 != "real")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand2, "integer or real");
 			return expression->expressionType = "error";
 		}
 		else if (expression->operation == "div" || expression->operation == "mod") {
 			string epType1 = analyseExpression(expression->operand1);
 			string epType2 = analyseExpression(expression->operand2);
-			//checked
+			 
 			if (epType2 == "integer" && expression->operand2->totalIntValueValid && expression->operand2->totalIntValue == 0)
 				addDivideZeroError(expression->operation, expression->operand2);
 			if (epType1 == "integer" && epType2 == "integer") {
@@ -714,9 +693,9 @@ string analyseExpression(_Expression* expression) {
 				}
 				return expression->expressionType = "integer";
 			}
-			if (epType1 != "error" && epType1 != "integer") //checked
+			if (epType1 != "error" && epType1 != "integer")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand1, "integer");
-			if (epType2 != "error" && epType2 != "integer") //checked
+			if (epType2 != "error" && epType2 != "integer")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand2, "integer");
 			return expression->expressionType = "error";
 		}
@@ -725,9 +704,9 @@ string analyseExpression(_Expression* expression) {
 			string epType2 = analyseExpression(expression->operand2);
 			if (epType1 == "boolean" && epType2 == "boolean")
 				return expression->expressionType = "boolean";
-			if (epType1 != "error" && epType1 != "boolean") //checked
+			if (epType1 != "error" && epType1 != "boolean")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand1, "boolean");
-			if (epType2 != "error" && epType2 != "boolean") //checked
+			if (epType2 != "error" && epType2 != "boolean")  
 				addSingleOperandExpressionTypeMismatchError(expression->operand2, "boolean");
 			return expression->expressionType = "error";
 		}
@@ -950,11 +929,11 @@ void addGeneralError(string error) {
 bool isIdIllgal(string id, int lineNumber) { //这里的Key指的是库程序名、主程序名、主程序参数
 	for (int i = 0; i <= mainSymbolTable->recordList[0]->amount + 4; i++) {
 		if (id == mainSymbolTable->recordList[i]->id) {
-			if (i == 0) //与主程序名同名 checked
+			if (i == 0) //与主程序名同名   
 				addGeneralError("[Duplicate defined error!] <Line " + itos(lineNumber) + "> \"" + id + "\" has been defined as the name of program at Line " + itos(mainSymbolTable->recordList[i]->lineNumber) + ".");
-			else if (i >= 1 && i <= mainSymbolTable->recordList[0]->amount) //与主程序参数同名 checked
+			else if (i >= 1 && i <= mainSymbolTable->recordList[0]->amount) //与主程序参数同名   
 				addGeneralError("[Duplicate defined error!] <Line " + itos(lineNumber) + "> \"" + id + "\" has been defined as a program parameter at Line " + itos(mainSymbolTable->recordList[i]->lineNumber) + ".");
-			else //与库程序同名 checked
+			else //与库程序同名   
 				addGeneralError("[Duplicate defined error!] <Line " + itos(lineNumber) + "> \"" + id + "\" has been defined as a lib program.");
 			return true;
 		}
